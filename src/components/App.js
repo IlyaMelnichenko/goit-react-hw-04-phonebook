@@ -1,80 +1,64 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { ContactForm } from './ContactForm/ContactForm';
 import { Filter } from './Filter/Filter';
 import { PhoneList } from './Phonelist/PhoneList';
 import { Container } from './ContactForm/StyledContactFrom';
+import { useState, useEffect } from 'react';
+export const App = () => {
+  const [contacts, setContacts] = useState([]);
+  const [filter, setFilter] = useState('');
 
-export class App extends Component {
-  state = {
-    contacts: [],
-    filter: '',
-  };
-
-  componentDidMount(){
+  useEffect(() => {
     const savedContacts = localStorage.getItem('savedContacts');
-    if (savedContacts !==null){
-      this.setState({
-        contacts: JSON.parse(savedContacts),
-      })
+    console.log(savedContacts);
+    if (savedContacts !== null) {
+      setContacts(JSON.parse(savedContacts));
     }
+  }, []);
 
-    
-  };
-  componentDidUpdate(prevProps,prevState){
-    if(prevState.contacts !==this.state.contacts){
-      localStorage.setItem('savedContacts',JSON.stringify(this.state.contacts));
+  useEffect(() => {
+    if (contacts.length !== 0) {
+      localStorage.setItem('savedContacts', JSON.stringify(contacts));
     }
-  }
+  }, [contacts]);
 
-  addPhoneCard = newCard => {
+  const addPhoneCard = newCard => {
     const checkName = newCard.Name;
     if (
-      this.state.contacts.some(
+      contacts.some(
         contact => contact.Name.toLowerCase() === checkName.toLowerCase()
       )
     ) {
       alert(`${checkName} already recorded in the directory`);
       return;
     }
-    this.setState(prevState => ({
-      contacts: [...prevState.contacts, newCard],
-    }));
-    
+    setContacts(prevState => [...prevState, newCard]);
   };
-  changefilterPhone = value => {
-    this.setState({
-      filter: value,
-    });
-  };
-  getFiltered = () => {
-    return this.state.contacts.filter(contact =>
-      contact.Name.toLowerCase().includes(this.state.filter.toLowerCase())
+  const changefilterPhone = value => setFilter(value);
+
+  const getFiltered = () =>
+    contacts.filter(contact =>
+      contact.Name.toLowerCase().includes(filter.toLowerCase())
+    );
+
+  const deleteCard = deleteId => {
+    setContacts(prevState =>
+      prevState.filter(contact => contact.id !== deleteId)
     );
   };
 
-  deleteCard = deleteId => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== deleteId),
-    }));
-  };
-
-  render() {
-    const filtered = this.getFiltered();
-    return (
-      <Container>
-        <h1>Phonebook</h1>
-        <ContactForm addPhoneCard={this.addPhoneCard} />
-        {this.state.contacts.length !== 0 && (
-          <>
-            <h2>Contacts</h2>
-            <Filter
-              changeFilter={this.changefilterPhone}
-              phoneFilter={this.state.filter}
-            />
-            <PhoneList contacts={filtered} deleteContact={this.deleteCard} />
-          </>
-        )}
-      </Container>
-    );
-  }
-}
+  const filtered = getFiltered();
+  return (
+    <Container>
+      <h1>Phonebook</h1>
+      <ContactForm addPhoneCard={addPhoneCard} />
+      {contacts.length !== 0 && (
+        <>
+          <h2>Contacts</h2>
+          <Filter changeFilter={changefilterPhone} phoneFilter={filter} />
+          <PhoneList contacts={filtered} deleteContact={deleteCard} />
+        </>
+      )}
+    </Container>
+  );
+};
